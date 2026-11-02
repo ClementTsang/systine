@@ -1,0 +1,231 @@
+# Main CI workflow to validate that files are formatted correctly, pass tests,
+# and pass lints.
+#
+# CI workflow was based on a lot of work from other people:
+# - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
+# - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
+# - https://www.reillywood.com/blog/rust-faster-ci/
+# - https://matklad.github.io/2021/09/04/fast-rust-builds.html
+
+name: ci
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CROSS_VERSION: "git:d6204e62acdba1a117341f93972f3d52470a3052"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.repository != 'ClementTsang/systine' }}
+
+jobs:
+  # Check if things should be skipped.
+  pre-job:
+    runs-on: ubuntu-24.04
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - name: Check if this action should be skipped
+        id: skip_check
+        uses: ClementTsang/skip-duplicate-actions@41b0a75f656d455934ffa6a46b779d8d996ac47c
+        with:
+          skip_after_successful_duplicate: "true"
+          paths: '[".github/**", "src/**", "c/**", "build.rs", "Cargo.lock", "Cargo.toml", "clippy.toml", "rustfmt.toml"]'
+          do_not_skip: '["workflow_dispatch", "push"]'
+
+  # Runs rustfmt + tests + clippy on the main supported platforms.
+  supported:
+    needs: pre-job
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    runs-on: ${{ matrix.info.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          - {
+              os: "ubuntu-24.04",
+              target: "x86_64-unknown-linux-gnu",
+              cross: false,
+            }
+          - {
+              os: "ubuntu-24.04-arm",
+              target: "aarch64-unknown-linux-gnu",
+              cross: false,
+            }
+          - { os: "macos-15", target: "x86_64-apple-darwin", cross: false }
+          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
+          - {
+              os: "windows-2022",
+              target: "x86_64-pc-windows-msvc",
+              cross: false,
+            }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          target: ${{ matrix.info.target }}
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }}
+        with:
+          key: ${{ matrix.info.target }}
+          cache-all-crates: true
+
+      - name: Check cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: Run tests
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
+        with:
+          command: test
+          args: --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ env.CROSS_VERSION }}
+        env:
+          RUST_BACKTRACE: full
+
+      - name: Run clippy
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
+        with:
+          command: clippy
+          args: --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
+          use-cross: ${{ matrix.info.cross }}
+          cross-version: ${{ env.CROSS_VERSION }}
+        env:
+          RUST_BACKTRACE: full
+
+  # Run checks for cross-compiled Linux targets.
+  # Only fmt and clippy run since tests access OS-specific files
+  # (/etc/os-release, /proc, etc.) that are unavailable when cross-compiling.
+  cross-check:
+    needs: pre-job
+    strategy:
+      fail-fast: false
+      matrix:
+        info:
+          # 32-bit x86 Linux (glibc)
+          - {
+              target: "i686-unknown-linux-gnu",
+              checks: ["format", "clippy"],
+            }
+
+          # x86_64 musl
+          - {
+              target: "x86_64-unknown-linux-musl",
+              checks: ["format", "clippy"],
+            }
+
+          # i686 musl
+          - { target: "i686-unknown-linux-musl", checks: ["format", "clippy"] }
+
+          # aarch64 musl
+          - {
+              target: "aarch64-unknown-linux-musl",
+              checks: ["format", "clippy"],
+            }
+
+          # 32-bit ARM (gnueabihf)
+          - {
+              target: "armv7-unknown-linux-gnueabihf",
+              checks: ["format", "clippy"],
+            }
+
+          # 32-bit ARM (gnueabi)
+          - {
+              target: "arm-unknown-linux-gnueabi",
+              checks: ["format", "clippy"],
+            }
+
+          # ARM64 Linux
+          - {
+              target: "aarch64-unknown-linux-gnu",
+              checks: ["format", "clippy"],
+            }
+
+          # RISC-V 64gc
+          - {
+              target: "riscv64gc-unknown-linux-gnu",
+              checks: ["format", "clippy"],
+            }
+
+          # LoongArch 64
+          - {
+              target: "loongarch64-unknown-linux-gnu",
+              checks: ["format", "clippy"],
+            }
+    runs-on: "ubuntu-24.04"
+    if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+        with:
+          toolchain: stable
+          target: ${{ matrix.info.target }}
+          components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
+
+      - name: Enable Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        if: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }}
+        with:
+          key: ${{ matrix.info.target }}
+          cache-all-crates: true
+
+      - name: Check cargo fmt
+        if: ${{ contains(matrix.info.checks, 'format') }}
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
+        with:
+          command: clippy
+          args: --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
+          use-cross: true
+          cross-version: ${{ env.CROSS_VERSION }}
+
+  # Final completion job.
+  completion:
+    name: "CI Pass Check"
+    needs: [supported, cross-check]
+    if: ${{ always() && (needs.supported.result != 'skipped' || needs.cross-check.result != 'skipped') }}
+    runs-on: "ubuntu-24.04"
+    steps:
+      - name: CI Passed
+        if: ${{ (needs.supported.result == 'success' || needs.supported.result == 'skipped') && (needs.cross-check.result == 'success' || needs.cross-check.result == 'skipped') }}
+        run: echo "CI workflow completed successfully."
+
+      - name: CI Failed
+        if: ${{ needs.supported.result == 'failure' || needs.cross-check.result == 'failure' }}
+        run: |
+          echo "CI workflow failed.";
+          exit 1;
+
+      - name: CI Cancelled
+        if: ${{ needs.supported.result == 'cancelled' || needs.cross-check.result == 'cancelled' }}
+        run: |
+          echo "CI workflow was cancelled.";
+          exit 1;
