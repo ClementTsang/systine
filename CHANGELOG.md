@@ -2,7 +2,7 @@
 
 ## 0.10.0
 
-Initial release of the fork.
+Initial release of the fork. No real changes, mostly just modernizing the code.
 
 ---
 
