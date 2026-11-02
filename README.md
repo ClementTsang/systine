@@ -1,25 +1,17 @@
-# sys-info-rs
-
-[![Build Status](https://travis-ci.org/FillZpp/sys-info-rs.svg?branch=master)](https://travis-ci.org/FillZpp/sys-info-rs)
+# systine
 
 Get system information in Rust.
 
-For now it supports Linux, Mac OS X, illumos, Solaris, FreeBSD, OpenBSD, NetBSD and Windows.
-And now it can get information of kernel/cpu/memory/disk/load/hostname and so on.
+A fork of [`sys-info`](https://github.com/FillZpp/sys-info-rs) with a focus on illumos, Solaris, and OpenBSD for use with [bottom](https://github.com/ClementTsang/bottom). Thanks to all who worked on the original crate!
 
-[Documentation](https://docs.rs/sys-info)
+[Documentation](https://docs.rs/systine)
 
 ### Usage
 Add this to `Cargo.toml`:
 
 ```
 [dependencies]
-sys-info = "0.9"
+systine = "0.1.0"
 ```
 
-and add this to crate root:
-
-```
-extern crate sys_info;
-```
-
+and add this to crate root.
