@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+
+- [#1](https://github.com/ClementTsang/systine/pull/1): Restructure codebase.
+
 ## 0.10.0
 
 Initial release of the fork. No real changes, mostly just modernizing the code.
