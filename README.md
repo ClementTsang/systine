@@ -13,5 +13,5 @@ Add this to `Cargo.toml`:
 
 ```
 [dependencies]
-systine = "0.1.0"
+systine = "0.10.0"
 ```
