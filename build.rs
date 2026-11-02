@@ -1,10 +1,13 @@
-extern crate cc;
+//! Build script for compiling the C source files based on the target OS.
 
 use std::env;
 
 fn main() {
-    let target = env::var("TARGET").unwrap();
-    let target_os = target.split('-').nth(2).unwrap();
+    let target = env::var("TARGET").expect("TARGET not set");
+    let target_os = target
+        .split('-')
+        .nth(2)
+        .expect("could not parse target_os from TARGET triple");
 
     let mut builder = cc::Build::new();
     match target_os {

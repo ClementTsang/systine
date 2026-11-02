@@ -10,16 +10,31 @@ repository = "https://github.com/ClementTsang/systine"
 documentation = "https://docs.rs/systine"
 description = "Get system information in Rust."
 edition = "2024"
-
-links = "info"
+rust-version = "1.95.0"
 build = "build.rs"
 
 [lib]
-name = "systine"
-path = "src/lib.rs"
+test = true
+doctest = true
+doc = true
 
 [build-dependencies]
 cc = "1.11.0"
 
 [dependencies]
 libc = "0.2.189"
+
+[lints.rust]
+rust_2018_idioms = "deny"
+# missing_docs = "deny"
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
+missing_crate_level_docs = "deny"
+
+[lints.clippy]
+todo = "deny"
+unimplemented = "deny"
+missing_safety_doc = "deny"
+unwrap_used = "deny"
