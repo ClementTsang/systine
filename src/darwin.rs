@@ -12,7 +12,8 @@ static OS_KERN_BOOTTIME: libc::c_int = 21;
 
 /// Get operation system type.
 pub fn os_type() -> Result<String, Error> {
-    let typ = unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
+    let typ =
+        unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
     Ok(String::from_utf8_lossy(typ).into_owned())
 }
 

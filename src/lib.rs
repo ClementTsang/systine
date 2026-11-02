@@ -8,46 +8,71 @@ use std::fmt;
 use std::fs::File;
 use std::io::{self, Read};
 
-#[cfg(target_os = "linux")]
-mod linux;
-#[cfg(target_os = "windows")]
-mod windows;
+mod c_helpers;
 #[cfg(target_vendor = "apple")]
 mod darwin;
 #[cfg(target_os = "freebsd")]
 mod freebsd;
-#[cfg(target_os = "openbsd")]
-mod openbsd;
-#[cfg(target_os = "netbsd")]
-mod netbsd;
 #[cfg(target_os = "haiku")]
 mod haiku;
-#[cfg(target_os = "solaris")]
-mod solaris;
 #[cfg(target_os = "illumos")]
 mod illumos;
-mod c_helpers;
+#[cfg(target_os = "linux")]
+mod linux;
+#[cfg(target_os = "netbsd")]
+mod netbsd;
+#[cfg(target_os = "openbsd")]
+mod openbsd;
+#[cfg(target_os = "solaris")]
+mod solaris;
+#[cfg(target_os = "windows")]
+mod windows;
 
 // Re-export platform functions at crate root.
 
-#[cfg(target_os = "linux")]
-pub use linux::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
-#[cfg(target_os = "windows")]
-pub use windows::{cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
 #[cfg(target_vendor = "apple")]
-pub use darwin::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+pub use darwin::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
 #[cfg(target_os = "freebsd")]
-pub use freebsd::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
-#[cfg(target_os = "openbsd")]
-pub use openbsd::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
-#[cfg(target_os = "netbsd")]
-pub use netbsd::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+pub use freebsd::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
 #[cfg(target_os = "haiku")]
-pub use haiku::{boottime, cpu_num, cpu_speed, disk_info, hostname, mem_info, os_release, os_type, proc_total};
-#[cfg(target_os = "solaris")]
-pub use solaris::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+pub use haiku::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, mem_info, os_release, os_type, proc_total,
+};
 #[cfg(target_os = "illumos")]
-pub use illumos::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+pub use illumos::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
+#[cfg(target_os = "linux")]
+pub use linux::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
+#[cfg(target_os = "netbsd")]
+pub use netbsd::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
+#[cfg(target_os = "openbsd")]
+pub use openbsd::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
+#[cfg(target_os = "solaris")]
+pub use solaris::{
+    boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+    proc_total,
+};
+#[cfg(target_os = "windows")]
+pub use windows::{
+    cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total,
+};
 
 /// System load average value.
 #[repr(C)]
@@ -291,7 +316,10 @@ fn parse_line_for_linux_os_release(l: String) -> Option<(String, String)> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::len_zero)]
 mod test {
-    use crate::{boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+    use crate::{
+        boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
+        proc_total,
+    };
 
     #[test]
     pub fn test_os_type() {

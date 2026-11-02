@@ -1,9 +1,9 @@
 //! Linux implementation.
 
+use std::collections::HashMap;
 use std::ffi;
 use std::fs::File;
 use std::io::{self, Read};
-use std::collections::HashMap;
 
 use crate::c_helpers;
 use crate::{DiskInfo, Error, LoadAvg, MemInfo};
@@ -144,7 +144,10 @@ pub fn hostname() -> Result<String, Error> {
         }
         let hostname_len = libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size);
         buf.set_len(hostname_len);
-        Ok(ffi::CString::new(buf).expect("hostname contains invalid data").into_string().expect("hostname is not valid UTF-8"))
+        Ok(ffi::CString::new(buf)
+            .expect("hostname contains invalid data")
+            .into_string()
+            .expect("hostname is not valid UTF-8"))
     }
 }
 

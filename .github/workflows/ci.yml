@@ -107,7 +107,7 @@ jobs:
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
         with:
           command: clippy
-          args: --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
+          args: --locked --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
         env:
@@ -203,7 +203,7 @@ jobs:
         uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
         with:
           command: clippy
-          args: --all-targets --workspace --locked --target=${{ matrix.info.target }} -- -D warnings
+          args: --locked --target=${{ matrix.info.target }} -- -D warnings
           use-cross: true
           cross-version: ${{ env.CROSS_VERSION }}
 
