@@ -1,8 +1,8 @@
 [package]
 
-name = "sys-info"
-version = "0.9.1"
-authors = ["Siyu Wang <FillZpp.pub@gmail.com>"]
+name = "systine"
+version = "0.1.0"
+authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
 license = "MIT"
 readme = "README.md"
 keywords = ["system", "cpu", "disk", "memory", "information"]
@@ -13,6 +13,7 @@ Get system information in Rust.
 
 For now it supports Linux, Mac OS X, illumos, Solaris, FreeBSD, OpenBSD, and Windows.
 """
+edition = "2024"
 
 links = "info"
 build = "build.rs"
