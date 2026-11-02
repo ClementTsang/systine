@@ -1,4 +1,12 @@
-# ChangeLog
+# Changelog
+
+## 0.10.0
+
+Initial release of the fork.
+
+---
+
+The below is the changelog before the fork.
 
 ## 0.9.1
 
