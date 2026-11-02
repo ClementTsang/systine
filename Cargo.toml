@@ -16,7 +16,7 @@ build = "build.rs"
 
 [lib]
 name = "systine"
-path = "lib.rs"
+path = "src/lib.rs"
 
 [build-dependencies]
 cc = "1.11.0"
