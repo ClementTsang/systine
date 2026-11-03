@@ -109,7 +109,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Run checks for cross-compiled Linux targets and non-Linux targets.
+  # Run checks for cross-compiled targets.
   # Only fmt and clippy run since tests access OS-specific files
   # (/etc/os-release, /proc, etc.) that are unavailable when cross-compiling.
   cross-check:
@@ -118,44 +118,26 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          - { target: "i686-unknown-linux-gnu", checks: ["format", "clippy"] }
-          - {
-              target: "x86_64-unknown-linux-musl",
-              checks: ["format", "clippy"],
-            }
-          - { target: "i686-unknown-linux-musl", checks: ["format", "clippy"] }
-          - {
-              target: "aarch64-unknown-linux-musl",
-              checks: ["format", "clippy"],
-            }
-          - {
-              target: "armv7-unknown-linux-gnueabihf",
-              checks: ["format", "clippy"],
-            }
-          - {
-              target: "arm-unknown-linux-gnueabi",
-              checks: ["format", "clippy"],
-            }
-          - {
-              target: "aarch64-unknown-linux-gnu",
-              checks: ["format", "clippy"],
-            }
-          - {
-              target: "riscv64gc-unknown-linux-gnu",
-              checks: ["format", "clippy"],
-            }
-          - {
-              target: "loongarch64-unknown-linux-gnu",
-              checks: ["format", "clippy"],
-            }
-          # Non-Linux targets (cross-compiled)
-          - { target: "i686-unknown-freebsd", checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-freebsd", checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-netbsd", checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-openbsd", checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-illumos", checks: ["format", "clippy"] }
-          - { target: "x86_64-sun-solaris", checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-haiku", checks: ["format", "clippy"] }
+          # Linux targets with published rustc toolchains
+          - { target: "x86_64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
+          - { target: "i686-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
+          - { target: "aarch64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
+          - { target: "i686-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
+          - { target: "aarch64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
+          - { target: "riscv64gc-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
+          - { target: "loongarch64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
+          # Linux targets via cross
+          - { target: "armv7-unknown-linux-gnueabihf", cross: true, checks: ["format", "clippy"] }
+          - { target: "arm-unknown-linux-gnueabi", cross: true, checks: ["format", "clippy"] }
+          # Non-Linux targets via cross (no published rustc stdlib)
+          - { target: "i686-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-netbsd", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-openbsd", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-illumos", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-sun-solaris", cross: true, checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-haiku", cross: true, checks: ["format", "clippy"] }
     runs-on: "ubuntu-24.04"
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 20
@@ -169,7 +151,7 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-          target: ${{ matrix.info.target }}
+          target: ${{ matrix.info.cross != true && matrix.info.target || '' }}
           components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
 
       - name: Enable Rust cache
@@ -188,7 +170,7 @@ jobs:
         with:
           command: clippy
           args: --locked --target=${{ matrix.info.target }} -- -D warnings
-          use-cross: true
+          use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
 
   # Final completion job.

@@ -89,7 +89,7 @@ mod wrapper {
         value: KstatValue,
     }
 
-    extern "C" {
+    unsafe extern "C" {
         fn kstat_open() -> *mut KstatCtl;
         fn kstat_close(kc: *mut KstatCtl) -> c_int;
         fn kstat_lookup(
@@ -119,7 +119,7 @@ mod wrapper {
             let kc = NonNull::new(unsafe { kstat_open() });
             if let Some(kc) = kc {
                 Ok(KstatWrapper {
-                    kc: kc,
+                    kc,
                     ks: None,
                     stepping: false,
                 })

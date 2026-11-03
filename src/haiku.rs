@@ -56,16 +56,18 @@ pub fn disk_info() -> Result<DiskInfo, Error> {
 
 /// Get hostname.
 pub fn hostname() -> Result<String, Error> {
-    unsafe {
-        let buf_size = libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize;
-        let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
-        if libc::gethostname(buf.as_mut_ptr() as *mut libc::c_char, buf_size) < 0 {
-            return Err(Error::IO(std::io::Error::last_os_error()));
-        }
-        let hostname_len = libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size);
-        buf.set_len(hostname_len);
-        Ok(std::ffi::CString::new(buf).unwrap().into_string().unwrap())
+    let buf_size = unsafe { libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize };
+    let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
+    let ret = unsafe { libc::gethostname(buf.as_mut_ptr() as *mut libc::c_char, buf_size) };
+    if ret < 0 {
+        return Err(Error::IO(std::io::Error::last_os_error()));
     }
+    let hostname_len = unsafe { libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size) };
+    buf.set_len(hostname_len);
+    std::ffi::CString::new(buf)
+        .ok()
+        .and_then(|cstr| cstr.into_string().ok())
+        .ok_or(Error::Unknown)
 }
 
 /// Get system boottime.

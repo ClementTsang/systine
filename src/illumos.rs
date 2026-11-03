@@ -2,7 +2,6 @@
 
 use std::time::SystemTime;
 
-use crate::c_helpers;
 use crate::{DiskInfo, Error, LoadAvg, MemInfo};
 
 #[path = "kstat.rs"]
@@ -35,7 +34,7 @@ pub fn os_release() -> Result<String, Error> {
 /// Notice, it returns the logical cpu quantity.
 pub fn cpu_num() -> Result<u32, Error> {
     let ret = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
-    if ret < 1 || ret as i64 > std::u32::MAX as i64 {
+    if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::IO(std::io::Error::last_os_error()))
     } else {
         Ok(ret as u32)
@@ -70,7 +69,7 @@ pub fn proc_total() -> Result<u64, Error> {
 
 fn pagesize() -> Result<u32, Error> {
     let ret = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
-    if ret < 1 || ret > std::u32::MAX as i64 {
+    if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::Unknown)
     } else {
         Ok(ret as u32)

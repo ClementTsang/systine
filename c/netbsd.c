@@ -8,6 +8,7 @@
 #include <sys/utsname.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -65,7 +66,7 @@ unsigned long get_cpu_speed(void) {
 }
 
 unsigned long get_proc_total(void) {
-	char errbuf[_POSIX2_LINE_MAX];
+	char errbuf[LINE_MAX];
         int count;
 	kvm_t *kd;
 	struct kinfo_proc *kp;
