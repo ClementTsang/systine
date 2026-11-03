@@ -71,7 +71,7 @@ pub fn hostname() -> Result<String, Error> {
         .map_err(Error::ExecFailed)
         .and_then(|output| {
             String::from_utf8(output.stdout)
-                .map_err(|e| Error::General(e.into_string()))
+                .map_err(|e| Error::General(e.to_string()))
                 .map(|s| s.trim().to_string())
         })
 }
