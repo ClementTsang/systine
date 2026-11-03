@@ -30,12 +30,18 @@ mod windows;
 
 // Re-export platform functions at crate root.
 
-#[cfg(all(target_vendor = "apple", not(any(target_arch = "aarch64", target_arch = "arm"))))]
+#[cfg(all(
+    target_vendor = "apple",
+    not(any(target_arch = "aarch64", target_arch = "arm"))
+))]
 pub use darwin::{
     boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
     proc_total,
 };
-#[cfg(all(target_vendor = "apple", any(target_arch = "aarch64", target_arch = "arm")))]
+#[cfg(all(
+    target_vendor = "apple",
+    any(target_arch = "aarch64", target_arch = "arm")
+))]
 pub use darwin::{
     boottime, cpu_num, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total,
 };
