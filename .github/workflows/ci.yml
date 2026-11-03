@@ -1,11 +1,7 @@
 # Main CI workflow to validate that files are formatted correctly, pass tests,
 # and pass lints.
 #
-# CI workflow was based on a lot of work from other people:
-# - https://github.com/heim-rs/heim/blob/master/.github/workflows/ci.yml
-# - https://github.com/BurntSushi/ripgrep/blob/master/.github/workflows/ci.yml
-# - https://www.reillywood.com/blog/rust-faster-ci/
-# - https://matklad.github.io/2021/09/04/fast-rust-builds.html
+# Based on https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml.
 
 name: ci
 
