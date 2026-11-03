@@ -3,7 +3,7 @@
 #
 # Based on https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml.
 #
-# TODO: Add haiku
+# TODO: Add haiku, illumos, solaris, bsds
 
 name: ci
 
