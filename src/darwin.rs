@@ -86,8 +86,11 @@ pub fn hostname() -> Result<String, Error> {
         }
         let hostname_len = libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size);
         buf.set_len(hostname_len);
-        let cstr = ffi::CString::new(buf).map_err(Error::ExecFailed)?;
-        cstr.into_string().map_err(Error::ExecFailed)
+        let cstr = match ffi::CString::new(buf) {
+            Ok(s) => s,
+            Err(_) => return Err(Error::Unknown),
+        };
+        cstr.into_string().map_err(|_| Error::Unknown)
     }
 }
 
