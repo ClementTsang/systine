@@ -2,6 +2,8 @@
 # and pass lints.
 #
 # Based on https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml.
+#
+# TODO: Add haiku
 
 name: ci
 
@@ -118,52 +120,32 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # 32-bit x86 Linux (glibc)
-          - {
-              target: "i686-unknown-linux-gnu",
-              checks: ["format", "clippy"],
-            }
-
-          # x86_64 musl
+          - { target: "i686-unknown-linux-gnu", checks: ["format", "clippy"] }
           - {
               target: "x86_64-unknown-linux-musl",
               checks: ["format", "clippy"],
             }
-
-          # i686 musl
           - { target: "i686-unknown-linux-musl", checks: ["format", "clippy"] }
-
-          # aarch64 musl
           - {
               target: "aarch64-unknown-linux-musl",
               checks: ["format", "clippy"],
             }
-
-          # 32-bit ARM (gnueabihf)
           - {
               target: "armv7-unknown-linux-gnueabihf",
               checks: ["format", "clippy"],
             }
-
-          # 32-bit ARM (gnueabi)
           - {
               target: "arm-unknown-linux-gnueabi",
               checks: ["format", "clippy"],
             }
-
-          # ARM64 Linux
           - {
               target: "aarch64-unknown-linux-gnu",
               checks: ["format", "clippy"],
             }
-
-          # RISC-V 64gc
           - {
               target: "riscv64gc-unknown-linux-gnu",
               checks: ["format", "clippy"],
             }
-
-          # LoongArch 64
           - {
               target: "loongarch64-unknown-linux-gnu",
               checks: ["format", "clippy"],
