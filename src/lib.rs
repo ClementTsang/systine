@@ -316,12 +316,11 @@ fn parse_line_for_linux_os_release(l: String) -> Option<(String, String)> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::len_zero)]
 mod test {
-    use crate::{
-        cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
-        proc_total,
-    };
     #[cfg(not(windows))]
     use crate::boottime;
+    use crate::{
+        cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total,
+    };
 
     #[test]
     pub fn test_os_type() {
@@ -389,8 +388,6 @@ mod test {
     #[test]
     #[cfg(not(windows))]
     pub fn test_boottime() {
-        use crate::boottime;
-
         let bt = boottime().unwrap();
         println!("boottime(): {} {}", bt.tv_sec, bt.tv_usec);
         assert!(bt.tv_sec > 0 || bt.tv_usec > 0);

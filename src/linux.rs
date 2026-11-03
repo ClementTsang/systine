@@ -152,7 +152,6 @@ pub fn hostname() -> Result<String, Error> {
 }
 
 /// Get system boottime.
-#[expect(deprecated, reason = "libc::time_t and libc::suseconds_t are deprecated in libc 0.2 because musl 1.2.0 changes them to 64-bit; libc::timeval fields must remain compatible with the C struct layout")]
 pub fn boottime() -> Result<libc::timeval, Error> {
     let mut bt = libc::timeval {
         tv_sec: 0,
@@ -170,7 +169,16 @@ pub fn boottime() -> Result<libc::timeval, Error> {
                 .expect("uptime should be valid f64 values")
         })
         .collect();
-    bt.tv_sec = secs[0] as libc::time_t;
-    bt.tv_usec = secs[1] as libc::suseconds_t;
+    #[cfg_attr(
+        any(target_env = "musl"),
+        expect(
+            deprecated,
+            reason = "libc::time_t and libc::suseconds_t are deprecated in libc 0.2 because musl 1.2.0 changes them to 64-bit; libc::timeval fields must remain compatible with the C struct layout"
+        )
+    )]
+    {
+        bt.tv_sec = secs[0] as libc::time_t;
+        bt.tv_usec = secs[1] as libc::suseconds_t;
+    }
     Ok(bt)
 }
