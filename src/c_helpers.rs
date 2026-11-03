@@ -23,10 +23,7 @@ unsafe extern "C" {
         )),
         any(unix, windows)
     ))]
-    #[expect(
-        dead_code,
-        reason = "used on some platforms, others use libc::sysconf directly"
-    )]
+    #[allow(dead_code)]
     pub fn get_cpu_num() -> u32;
 
     #[cfg(any(

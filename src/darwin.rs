@@ -12,7 +12,8 @@ static OS_KERN_BOOTTIME: libc::c_int = 21;
 
 /// Get operation system type.
 pub fn os_type() -> Result<String, Error> {
-    let typ = unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
+    let typ =
+        unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
     Ok(String::from_utf8_lossy(typ).into_owned())
 }
 
@@ -20,7 +21,7 @@ pub fn os_type() -> Result<String, Error> {
 pub fn os_release() -> Result<String, Error> {
     unsafe {
         let rp = c_helpers::get_os_release() as *const libc::c_char;
-        if rp == std::ptr::null() {
+        if rp.is_null() {
             Err(Error::Unknown)
         } else {
             let typ = ffi::CStr::from_ptr(rp).to_bytes();
@@ -39,6 +40,7 @@ pub fn cpu_num() -> Result<u32, Error> {
 /// Get cpu speed.
 ///
 /// Such as 2500, that is 2500 MHz.
+#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub fn cpu_speed() -> Result<u64, Error> {
     unsafe { Ok(c_helpers::get_cpu_speed()) }
 }
@@ -84,7 +86,11 @@ pub fn hostname() -> Result<String, Error> {
         }
         let hostname_len = libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size);
         buf.set_len(hostname_len);
-        Ok(ffi::CString::new(buf).unwrap().into_string().unwrap())
+        let cstr = match ffi::CString::new(buf) {
+            Ok(s) => s,
+            Err(_) => return Err(Error::Unknown),
+        };
+        cstr.into_string().map_err(|_| Error::Unknown)
     }
 }
 

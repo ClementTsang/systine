@@ -8,7 +8,8 @@ use crate::{DiskInfo, Error, LoadAvg, MemInfo};
 
 /// Get operation system type.
 pub fn os_type() -> Result<String, Error> {
-    let typ = unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
+    let typ =
+        unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
     Ok(String::from_utf8_lossy(typ).into_owned())
 }
 
@@ -16,7 +17,7 @@ pub fn os_type() -> Result<String, Error> {
 pub fn os_release() -> Result<String, Error> {
     unsafe {
         let rp = c_helpers::get_os_release() as *const libc::c_char;
-        if rp == std::ptr::null() {
+        if rp.is_null() {
             Err(Error::Unknown)
         } else {
             let typ = ffi::CStr::from_ptr(rp).to_bytes();
@@ -68,5 +69,9 @@ pub fn hostname() -> Result<String, Error> {
     Command::new("hostname")
         .output()
         .map_err(Error::ExecFailed)
-        .map(|output| String::from_utf8(output.stdout).unwrap().trim().to_string())
+        .and_then(|output| {
+            String::from_utf8(output.stdout)
+                .map_err(|e| Error::General(e.to_string()))
+                .map(|s| s.trim().to_string())
+        })
 }
