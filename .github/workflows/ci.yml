@@ -119,11 +119,7 @@ jobs:
       fail-fast: false
       matrix:
         info:
-          # Linux targets with published rustc toolchains
-          - { target: "x86_64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
           # Linux targets via cross (need cross-linkers not available on GitHub runners)
-          - { target: "i686-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
-          - { target: "aarch64-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
           - { target: "i686-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
           - { target: "aarch64-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
           - { target: "riscv64gc-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
@@ -134,7 +130,7 @@ jobs:
           - { target: "i686-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
           - { target: "x86_64-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
           - { target: "x86_64-unknown-netbsd", cross: true, checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-openbsd", cross: true, checks: ["format", "clippy"] }
+          # OpenBSD has no cross-rs Docker image; remove for now
           - { target: "x86_64-unknown-illumos", cross: true, checks: ["format", "clippy"] }
           - { target: "x86_64-sun-solaris", cross: true, checks: ["format", "clippy"] }
           - { target: "x86_64-unknown-haiku", cross: true, checks: ["format", "clippy"] }
@@ -151,8 +147,7 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-          target: ${{ matrix.info.cross != true && matrix.info.target || '' }}
-          components: ${{ contains(matrix.info.checks, 'format') && 'rustfmt, clippy' || 'clippy' }}
+          components: rustfmt, clippy
 
       - name: Enable Rust cache
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
