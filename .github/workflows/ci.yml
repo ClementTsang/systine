@@ -120,14 +120,14 @@ jobs:
         info:
           # Linux targets with published rustc toolchains
           - { target: "x86_64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
-          - { target: "i686-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
-          - { target: "aarch64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
-          - { target: "i686-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
           - { target: "x86_64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
-          - { target: "aarch64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
-          - { target: "riscv64gc-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
-          - { target: "loongarch64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
-          # Linux targets via cross
+          # Linux targets via cross (need cross-linkers not available on GitHub runners)
+          - { target: "i686-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
+          - { target: "aarch64-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
+          - { target: "i686-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
+          - { target: "aarch64-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
+          - { target: "riscv64gc-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
+          - { target: "loongarch64-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
           - { target: "armv7-unknown-linux-gnueabihf", cross: true, checks: ["format", "clippy"] }
           - { target: "arm-unknown-linux-gnueabi", cross: true, checks: ["format", "clippy"] }
           # Non-Linux targets via cross (no published rustc stdlib)
