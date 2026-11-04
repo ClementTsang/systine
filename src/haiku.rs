@@ -63,7 +63,9 @@ pub fn hostname() -> Result<String, Error> {
         return Err(Error::IO(std::io::Error::last_os_error()));
     }
     let hostname_len = unsafe { libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size) };
-    unsafe { buf.set_len(hostname_len); }
+    unsafe {
+        buf.set_len(hostname_len);
+    }
     std::ffi::CString::new(buf)
         .ok()
         .and_then(|cstr| cstr.into_string().ok())
