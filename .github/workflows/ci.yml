@@ -109,7 +109,8 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Run checks for cross-compiled targets.
+  # Run simpler checks for other targets for now.
+  # TODO: Promote some of these to be closer to bottom.
   # Only fmt and clippy run since tests access OS-specific files
   # (/etc/os-release, /proc, etc.) that are unavailable when cross-compiling.
   cross-check:
@@ -120,7 +121,6 @@ jobs:
         info:
           # Linux targets with published rustc toolchains
           - { target: "x86_64-unknown-linux-musl", cross: false, checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-linux-gnu", cross: false, checks: ["format", "clippy"] }
           # Linux targets via cross (need cross-linkers not available on GitHub runners)
           - { target: "i686-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
           - { target: "aarch64-unknown-linux-musl", cross: true, checks: ["format", "clippy"] }
