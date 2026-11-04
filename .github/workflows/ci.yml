@@ -120,20 +120,22 @@ jobs:
       matrix:
         info:
           # Linux targets via cross (need cross-linkers not available on GitHub runners)
-          - { target: "i686-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
-          - { target: "aarch64-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
-          - { target: "riscv64gc-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
-          - { target: "loongarch64-unknown-linux-gnu", cross: true, checks: ["format", "clippy"] }
-          - { target: "armv7-unknown-linux-gnueabihf", cross: true, checks: ["format", "clippy"] }
-          - { target: "arm-unknown-linux-gnueabi", cross: true, checks: ["format", "clippy"] }
+          - { target: "i686-unknown-linux-gnu", cross: true }
+          - { target: "aarch64-unknown-linux-gnu", cross: true }
+          - { target: "riscv64gc-unknown-linux-gnu", cross: true }
+          - { target: "loongarch64-unknown-linux-gnu", cross: true }
+          - { target: "armv7-unknown-linux-gnueabihf", cross: true }
+          - { target: "arm-unknown-linux-gnueabi", cross: true }
           # Non-Linux targets via cross (no published rustc stdlib)
-          - { target: "i686-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-freebsd", cross: true, checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-netbsd", cross: true, checks: ["format", "clippy"] }
-          # OpenBSD has no cross-rs Docker image; remove for now
-          - { target: "x86_64-unknown-illumos", cross: true, checks: ["format", "clippy"] }
-          - { target: "x86_64-sun-solaris", cross: true, checks: ["format", "clippy"] }
-          - { target: "x86_64-unknown-haiku", cross: true, checks: ["format", "clippy"] }
+          - { target: "i686-unknown-freebsd", cross: true }
+          - { target: "x86_64-unknown-freebsd", cross: true }
+          - { target: "x86_64-unknown-netbsd", cross: true }
+          # Taiki-e's cross-toolchain image
+          - { target: "x86_64-unknown-openbsd", cross: true }
+          # cross-rs has published images for these
+          - { target: "x86_64-unknown-illumos", cross: true }
+          - { target: "x86_64-pc-solaris", cross: true }
+          - { target: "sparcv9-sun-solaris", cross: true }
     runs-on: "ubuntu-24.04"
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 20
@@ -157,7 +159,6 @@ jobs:
           cache-all-crates: true
 
       - name: Check cargo fmt
-        if: ${{ contains(matrix.info.checks, 'format') }}
         run: cargo fmt --all -- --check
 
       - name: Run clippy
