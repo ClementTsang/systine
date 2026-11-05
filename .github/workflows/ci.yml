@@ -130,8 +130,9 @@ jobs:
           - { target: "i686-unknown-freebsd", cross: true }
           - { target: "x86_64-unknown-freebsd", cross: true }
           - { target: "x86_64-unknown-netbsd", cross: true }
-          # Taiki-e's cross-toolchain image
-          - { target: "x86_64-unknown-openbsd", cross: true }
+          # NOTE: openbsd cross-compilation is not yet available (no suitable Docker image)
+          # TODO: Re-enable when a suitable image becomes available
+          # - { target: "x86_64-unknown-openbsd", cross: true }
           # cross-rs has published images for these
           - { target: "x86_64-unknown-illumos", cross: true }
           - { target: "x86_64-pc-solaris", cross: true }
