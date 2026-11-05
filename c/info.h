@@ -27,11 +27,13 @@ typedef struct DiskInfo {
 const char *get_os_type(void);
 const char *get_os_release(void);
 
+#include <stdint.h>
+
 unsigned int get_cpu_num(void);
-unsigned long get_cpu_speed(void);
+uint64_t get_cpu_speed(void);
 
 LoadAvg get_loadavg(void);
-unsigned long get_proc_total(void);
+uint64_t get_proc_total(void);
 
 MemInfo get_mem_info(void);
 DiskInfo get_disk_info(void);
