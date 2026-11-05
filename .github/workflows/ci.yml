@@ -18,7 +18,7 @@ env:
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
-  CROSS_VERSION: "git:d6204e62acdba1a117341f93972f3d52470a3052"
+  CROSS_VERSION: "git:a9301e91f72bba3850460512685f6b16062015ff"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -100,7 +100,7 @@ jobs:
           RUST_BACKTRACE: full
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
+        uses: ClementTsang/cargo-action@69f4ebfa7421fcc17957f967cba3f528935489b9
         with:
           command: clippy
           args: --locked --target=${{ matrix.info.target }} -- -D warnings
@@ -163,7 +163,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run clippy
-        uses: ClementTsang/cargo-action@2438cc5f3ba4e971289fffca2a00dedea6911f14
+        uses: ClementTsang/cargo-action@69f4ebfa7421fcc17957f967cba3f528935489b9
         with:
           command: clippy
           args: --locked --target=${{ matrix.info.target }} -- -D warnings
