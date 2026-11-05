@@ -18,6 +18,7 @@ const NAME_SYSTEM_PAGES: &[u8] = b"system_pages\0";
 const STAT_FREEMEM: &[u8] = b"freemem\0";
 const STAT_PHYSMEM: &[u8] = b"physmem\0";
 
+#[allow(clippy::expect_used)]
 fn c(buf: &[u8]) -> &std::ffi::CStr {
     std::ffi::CStr::from_bytes_with_nul(buf).expect("invalid string constant")
 }
@@ -89,7 +90,7 @@ mod wrapper {
         value: KstatValue,
     }
 
-    extern "C" {
+    unsafe extern "C" {
         fn kstat_open() -> *mut KstatCtl;
         fn kstat_close(kc: *mut KstatCtl) -> c_int;
         fn kstat_lookup(
@@ -119,7 +120,7 @@ mod wrapper {
             let kc = NonNull::new(unsafe { kstat_open() });
             if let Some(kc) = kc {
                 Ok(KstatWrapper {
-                    kc: kc,
+                    kc,
                     ks: None,
                     stepping: false,
                 })
@@ -159,6 +160,7 @@ mod wrapper {
 
         /// Return the module name of the current kstat.  This routine will
         /// panic if step() has not returned true.
+        #[allow(clippy::expect_used)]
         pub fn module(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
             unsafe { ks.as_ref() }.module()
@@ -166,6 +168,7 @@ mod wrapper {
 
         /// Return the name of the current kstat.  This routine will panic if
         /// step() has not returned true.
+        #[allow(clippy::expect_used)]
         pub fn name(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
             unsafe { ks.as_ref() }.name()
@@ -274,6 +277,7 @@ pub struct Pages {
     pub physmem: u64,
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn pages() -> Result<Pages> {
     let mut k = wrapper::KstatWrapper::open()?;
 
