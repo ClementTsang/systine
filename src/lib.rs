@@ -30,20 +30,10 @@ mod windows;
 
 // Re-export platform functions at crate root.
 
-#[cfg(all(
-    target_vendor = "apple",
-    not(any(target_arch = "aarch64", target_arch = "arm"))
-))]
+#[cfg(target_vendor = "apple")]
 pub use darwin::{
     boottime, cpu_num, cpu_speed, disk_info, hostname, loadavg, mem_info, os_release, os_type,
     proc_total,
-};
-#[cfg(all(
-    target_vendor = "apple",
-    any(target_arch = "aarch64", target_arch = "arm")
-))]
-pub use darwin::{
-    boottime, cpu_num, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total,
 };
 #[cfg(target_os = "freebsd")]
 pub use freebsd::{
@@ -328,7 +318,6 @@ fn parse_line_for_linux_os_release(l: String) -> Option<(String, String)> {
 mod test {
     #[cfg(not(windows))]
     use crate::boottime;
-    #[cfg(not(all(target_vendor = "apple", target_arch = "aarch64")))]
     use crate::cpu_speed;
     use crate::{cpu_num, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
 

@@ -40,9 +40,16 @@ pub fn cpu_num() -> Result<u32, Error> {
 /// Get cpu speed.
 ///
 /// Such as 2500, that is 2500 MHz.
-#[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
 pub fn cpu_speed() -> Result<u64, Error> {
-    unsafe { Ok(c_helpers::get_cpu_speed()) }
+    // SAFETY: Calling C wrapper.
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
+    unsafe {
+        Ok(c_helpers::get_cpu_speed())
+    }
+
+    // FIXME: Fix this
+    #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+    Ok(0)
 }
 
 /// Get system load average value.
