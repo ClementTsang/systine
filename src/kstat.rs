@@ -33,7 +33,7 @@ mod wrapper {
     use std::os::raw::c_uint;
     use std::os::raw::c_ulong;
     use std::os::raw::c_void;
-    use std::ptr::{NonNull, null, null_mut};
+    use std::ptr::{NonNull, null_mut};
 
     const KSTAT_TYPE_NAMED: c_uchar = 1;
 
@@ -112,7 +112,7 @@ mod wrapper {
 
     /// Turn an optional CStr into a (const char *) for Some, or NULL for None.
     fn cp(p: &Option<&CStr>) -> *const c_char {
-        p.map_or_else(|| std::ptr::null::<c_char>(), |p| p.as_ptr())
+        p.map_or_else(std::ptr::null::<c_char>, |p| p.as_ptr())
     }
 
     impl KstatWrapper {
