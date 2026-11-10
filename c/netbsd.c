@@ -8,6 +8,7 @@
 #include <sys/utsname.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -41,7 +42,7 @@ const char *get_os_release(void) {
 	return (os_release);
 }
 
-unsigned long get_cpu_speed(void) {
+uint64_t get_cpu_speed(void) {
 #if defined(__i386__) || defined(__amd64__)
 	uint64_t tsc_freq;
 	size_t len;
@@ -64,8 +65,8 @@ unsigned long get_cpu_speed(void) {
 #endif
 }
 
-unsigned long get_proc_total(void) {
-	char errbuf[_POSIX2_LINE_MAX];
+uint64_t get_proc_total(void) {
+	char errbuf[LINE_MAX];
         int count;
 	kvm_t *kd;
 	struct kinfo_proc *kp;

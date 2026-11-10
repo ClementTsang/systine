@@ -18,6 +18,7 @@ const NAME_SYSTEM_PAGES: &[u8] = b"system_pages\0";
 const STAT_FREEMEM: &[u8] = b"freemem\0";
 const STAT_PHYSMEM: &[u8] = b"physmem\0";
 
+#[allow(clippy::expect_used)]
 fn c(buf: &[u8]) -> &std::ffi::CStr {
     std::ffi::CStr::from_bytes_with_nul(buf).expect("invalid string constant")
 }
@@ -32,7 +33,7 @@ mod wrapper {
     use std::os::raw::c_uint;
     use std::os::raw::c_ulong;
     use std::os::raw::c_void;
-    use std::ptr::{NonNull, null, null_mut};
+    use std::ptr::{NonNull, null_mut};
 
     const KSTAT_TYPE_NAMED: c_uchar = 1;
 
@@ -89,7 +90,7 @@ mod wrapper {
         value: KstatValue,
     }
 
-    extern "C" {
+    unsafe extern "C" {
         fn kstat_open() -> *mut KstatCtl;
         fn kstat_close(kc: *mut KstatCtl) -> c_int;
         fn kstat_lookup(
@@ -111,7 +112,7 @@ mod wrapper {
 
     /// Turn an optional CStr into a (const char *) for Some, or NULL for None.
     fn cp(p: &Option<&CStr>) -> *const c_char {
-        p.map_or_else(|| null(), |p| p.as_ptr())
+        p.map_or_else(std::ptr::null::<c_char>, |p| p.as_ptr())
     }
 
     impl KstatWrapper {
@@ -119,7 +120,7 @@ mod wrapper {
             let kc = NonNull::new(unsafe { kstat_open() });
             if let Some(kc) = kc {
                 Ok(KstatWrapper {
-                    kc: kc,
+                    kc,
                     ks: None,
                     stepping: false,
                 })
@@ -146,7 +147,7 @@ mod wrapper {
             } else {
                 self.ks = self
                     .ks
-                    .map_or(None, |ks| NonNull::new(unsafe { ks.as_ref() }.ks_next));
+                    .and_then(|ks| NonNull::new(unsafe { ks.as_ref() }.ks_next));
             }
 
             if self.ks.is_none() {
@@ -159,6 +160,7 @@ mod wrapper {
 
         /// Return the module name of the current kstat.  This routine will
         /// panic if step() has not returned true.
+        #[allow(clippy::expect_used)]
         pub fn module(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
             unsafe { ks.as_ref() }.module()
@@ -166,6 +168,7 @@ mod wrapper {
 
         /// Return the name of the current kstat.  This routine will panic if
         /// step() has not returned true.
+        #[allow(clippy::expect_used)]
         pub fn name(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
             unsafe { ks.as_ref() }.name()
@@ -195,13 +198,13 @@ mod wrapper {
         /// Look up a named kstat value and interpret it as a "long_t".
         pub fn data_long(&self, statistic: &CStr) -> Option<i64> {
             self.data_value(statistic)
-                .map(|kn| unsafe { kn.as_ref().value.l } as i64)
+                .map(|kn| unsafe { kn.as_ref().value.l })
         }
 
         /// Look up a named kstat value and interpret it as a "ulong_t".
         pub fn data_ulong(&self, statistic: &CStr) -> Option<u64> {
             self.data_value(statistic)
-                .map(|kn| unsafe { kn.as_ref().value.ul } as u64)
+                .map(|kn| unsafe { kn.as_ref().value.ul })
         }
 
         /// Look up a named kstat value and interpret it as a "uint32_t".
@@ -232,7 +235,7 @@ pub fn cpu_mhz() -> Result<u64> {
         }
     }
 
-    return Err("cpu speed kstat not found".into());
+    Err("cpu speed kstat not found".into())
 }
 
 pub fn boot_time() -> Result<u64> {
@@ -249,7 +252,7 @@ pub fn boot_time() -> Result<u64> {
         }
     }
 
-    return Err("boot time kstat not found".into());
+    Err("boot time kstat not found".into())
 }
 
 pub fn nproc() -> Result<u64> {
@@ -266,7 +269,7 @@ pub fn nproc() -> Result<u64> {
         }
     }
 
-    return Err("process count kstat not found".into());
+    Err("process count kstat not found".into())
 }
 
 pub struct Pages {
@@ -274,6 +277,7 @@ pub struct Pages {
     pub physmem: u64,
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn pages() -> Result<Pages> {
     let mut k = wrapper::KstatWrapper::open()?;
 
@@ -283,16 +287,15 @@ pub fn pages() -> Result<Pages> {
             continue;
         }
 
-        let freemem = k.data_ulong(c(STAT_FREEMEM));
-        let physmem = k.data_ulong(c(STAT_PHYSMEM));
+        let Some(freemem) = k.data_ulong(c(STAT_FREEMEM)) else {
+            continue;
+        };
+        let Some(physmem) = k.data_ulong(c(STAT_PHYSMEM)) else {
+            continue;
+        };
 
-        if freemem.is_some() && physmem.is_some() {
-            return Ok(Pages {
-                freemem: freemem.unwrap(),
-                physmem: physmem.unwrap(),
-            });
-        }
+        return Ok(Pages { freemem, physmem });
     }
 
-    return Err("system pages kstat not available".into());
+    Err("system pages kstat not available".into())
 }

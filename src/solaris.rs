@@ -2,7 +2,6 @@
 
 use std::time::SystemTime;
 
-use crate::c_helpers;
 use crate::{DiskInfo, Error, LoadAvg, MemInfo};
 
 #[path = "kstat.rs"]
@@ -35,7 +34,7 @@ pub fn os_release() -> Result<String, Error> {
 /// Notice, it returns the logical cpu quantity.
 pub fn cpu_num() -> Result<u32, Error> {
     let ret = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
-    if ret < 1 || ret as i64 > std::u32::MAX as i64 {
+    if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::IO(std::io::Error::last_os_error()))
     } else {
         Ok(ret as u32)
@@ -70,7 +69,7 @@ pub fn proc_total() -> Result<u64, Error> {
 
 fn pagesize() -> Result<u32, Error> {
     let ret = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
-    if ret < 1 || ret > std::u32::MAX as i64 {
+    if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::Unknown)
     } else {
         Ok(ret as u32)
@@ -101,16 +100,20 @@ pub fn disk_info() -> Result<DiskInfo, Error> {
 
 /// Get hostname.
 pub fn hostname() -> Result<String, Error> {
-    unsafe {
-        let buf_size = libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize;
-        let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
-        if libc::gethostname(buf.as_mut_ptr() as *mut libc::c_char, buf_size) < 0 {
-            return Err(Error::IO(std::io::Error::last_os_error()));
-        }
-        let hostname_len = libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size);
-        buf.set_len(hostname_len);
-        Ok(std::ffi::CString::new(buf).unwrap().into_string().unwrap())
+    let buf_size = unsafe { libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize };
+    let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
+    let ret = unsafe { libc::gethostname(buf.as_mut_ptr() as *mut libc::c_char, buf_size) };
+    if ret < 0 {
+        return Err(Error::IO(std::io::Error::last_os_error()));
     }
+    let hostname_len = unsafe { libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size) };
+    unsafe {
+        buf.set_len(hostname_len);
+    }
+    std::ffi::CString::new(buf)
+        .ok()
+        .and_then(|cstr| cstr.into_string().ok())
+        .ok_or(Error::Unknown)
 }
 
 /// Get system boottime.

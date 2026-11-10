@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +64,7 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 	ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION;
 
-unsigned long get_cpu_speed(void)
+uint64_t get_cpu_speed(void)
 {
 	unsigned int num = get_cpu_num();
 	unsigned int power_info_len = num * sizeof(PROCESSOR_POWER_INFORMATION);
@@ -71,7 +72,7 @@ unsigned long get_cpu_speed(void)
 
 	CallNtPowerInformation(ProcessorInformation, NULL, 0, power_info, power_info_len);
 
-	unsigned int speed = 0;
+	uint64_t speed = 0;
 	for (unsigned int i = 0; i < num; i++)
 	{
 		if (speed < power_info[i].MaxMhz)
@@ -99,15 +100,15 @@ LoadAvg get_loadavg(void)
 	return la;
 }
 
-unsigned long get_proc_total(void)
+uint64_t get_proc_total(void)
 {
 	DWORD aprocesses[MAXPROCESSES], cb_needed, cprocesses;
 
 	if (!EnumProcesses(aprocesses, sizeof(aprocesses), &cb_needed))
 		cprocesses = 0;
 	else
-		cprocesses = cb_needed / sizeof(unsigned long);
-	return cprocesses;
+		cprocesses = cb_needed / sizeof(DWORD);
+	return (uint64_t)cprocesses;
 }
 
 MemInfo get_mem_info(void)

@@ -101,21 +101,21 @@ pub fn boottime() -> Result<libc::timeval, Error> {
         tv_usec: 0,
     };
 
-    let mut mib = [OS_CTL_KERN, OS_KERN_BOOTTIME];
+    let mib = [OS_CTL_KERN, OS_KERN_BOOTTIME];
     let mut size: libc::size_t = size_of_val(&bt) as libc::size_t;
-    unsafe {
-        if libc::sysctl(
-            &mut mib[0],
+    let ret = unsafe {
+        libc::sysctl(
+            mib.as_ptr() as *mut _,
             2,
             &mut bt as *mut libc::timeval as *mut libc::c_void,
             &mut size,
             null_mut(),
             0,
-        ) == -1
-        {
-            Err(Error::IO(std::io::Error::last_os_error()))
-        } else {
-            Ok(bt)
-        }
+        )
+    };
+    if ret == -1 {
+        Err(Error::IO(std::io::Error::last_os_error()))
+    } else {
+        Ok(bt)
     }
 }
