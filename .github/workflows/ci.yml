@@ -2,8 +2,6 @@
 # and pass lints.
 #
 # Based on https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml.
-#
-# TODO: Add haiku, illumos, solaris, bsds
 
 name: ci
 
@@ -111,7 +109,7 @@ jobs:
         env:
           RUST_BACKTRACE: full
 
-  # Run checks for cross-compiled Linux targets.
+  # Run checks for cross-compiled Linux targets and non-Linux targets.
   # Only fmt and clippy run since tests access OS-specific files
   # (/etc/os-release, /proc, etc.) that are unavailable when cross-compiling.
   cross-check:
@@ -150,6 +148,14 @@ jobs:
               target: "loongarch64-unknown-linux-gnu",
               checks: ["format", "clippy"],
             }
+          # Non-Linux targets (cross-compiled)
+          - { target: "i686-unknown-freebsd", checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-freebsd", checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-netbsd", checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-openbsd", checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-illumos", checks: ["format", "clippy"] }
+          - { target: "x86_64-sun-solaris", checks: ["format", "clippy"] }
+          - { target: "x86_64-unknown-haiku", checks: ["format", "clippy"] }
     runs-on: "ubuntu-24.04"
     if: ${{ needs.pre-job.outputs.should_skip != 'true' }}
     timeout-minutes: 20
