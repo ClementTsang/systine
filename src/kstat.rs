@@ -112,7 +112,7 @@ mod wrapper {
 
     /// Turn an optional CStr into a (const char *) for Some, or NULL for None.
     fn cp(p: &Option<&CStr>) -> *const c_char {
-        p.map_or_else(|| null(), |p| p.as_ptr())
+        p.map_or_else(|| null, |p| p.as_ptr())
     }
 
     impl KstatWrapper {
@@ -147,7 +147,7 @@ mod wrapper {
             } else {
                 self.ks = self
                     .ks
-                    .map_or(None, |ks| NonNull::new(unsafe { ks.as_ref() }.ks_next));
+                    .and_then(|ks| NonNull::new(unsafe { ks.as_ref() }.ks_next));
             }
 
             if self.ks.is_none() {
@@ -198,13 +198,13 @@ mod wrapper {
         /// Look up a named kstat value and interpret it as a "long_t".
         pub fn data_long(&self, statistic: &CStr) -> Option<i64> {
             self.data_value(statistic)
-                .map(|kn| unsafe { kn.as_ref().value.l } as i64)
+                .map(|kn| unsafe { kn.as_ref().value.l })
         }
 
         /// Look up a named kstat value and interpret it as a "ulong_t".
         pub fn data_ulong(&self, statistic: &CStr) -> Option<u64> {
             self.data_value(statistic)
-                .map(|kn| unsafe { kn.as_ref().value.ul } as u64)
+                .map(|kn| unsafe { kn.as_ref().value.ul })
         }
 
         /// Look up a named kstat value and interpret it as a "uint32_t".
@@ -235,7 +235,7 @@ pub fn cpu_mhz() -> Result<u64> {
         }
     }
 
-    return Err("cpu speed kstat not found".into());
+    Err("cpu speed kstat not found".into())
 }
 
 pub fn boot_time() -> Result<u64> {
@@ -252,7 +252,7 @@ pub fn boot_time() -> Result<u64> {
         }
     }
 
-    return Err("boot time kstat not found".into());
+    Err("boot time kstat not found".into())
 }
 
 pub fn nproc() -> Result<u64> {
@@ -269,7 +269,7 @@ pub fn nproc() -> Result<u64> {
         }
     }
 
-    return Err("process count kstat not found".into());
+    Err("process count kstat not found".into())
 }
 
 pub struct Pages {
@@ -287,16 +287,15 @@ pub fn pages() -> Result<Pages> {
             continue;
         }
 
-        let freemem = k.data_ulong(c(STAT_FREEMEM));
-        let physmem = k.data_ulong(c(STAT_PHYSMEM));
+        let Some(freemem) = k.data_ulong(c(STAT_FREEMEM)) else {
+            continue;
+        };
+        let Some(physmem) = k.data_ulong(c(STAT_PHYSMEM)) else {
+            continue;
+        };
 
-        if freemem.is_some() && physmem.is_some() {
-            return Ok(Pages {
-                freemem: freemem.unwrap(),
-                physmem: physmem.unwrap(),
-            });
-        }
+        return Ok(Pages { freemem, physmem });
     }
 
-    return Err("system pages kstat not available".into());
+    Err("system pages kstat not available".into())
 }

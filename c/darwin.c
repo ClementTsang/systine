@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/sysctl.h>
@@ -81,8 +82,8 @@ unsigned int get_cpu_num(void) {
 	return num;
 }
 
-unsigned long get_cpu_speed(void) {
-	unsigned long speed;
+uint64_t get_cpu_speed(void) {
+	uint64_t speed;
 	size_t len;
 
 	len = sizeof(speed);
@@ -92,7 +93,7 @@ unsigned long get_cpu_speed(void) {
 	return speed;
 }
 
-unsigned long get_proc_total(void) {
+uint64_t get_proc_total(void) {
 	int mib[3];
 	size_t len;
 
@@ -102,7 +103,7 @@ unsigned long get_proc_total(void) {
 
 	sysctl(mib, 3, NULL, &len, NULL, 0);
 
-	return len / sizeof(struct kinfo_proc);
+	return (uint64_t)(len / sizeof(struct kinfo_proc));
 }
 
 MemInfo get_mem_info(void) {
