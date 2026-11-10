@@ -2,7 +2,6 @@
 
 use std::time::SystemTime;
 
-use crate::c_helpers;
 use crate::{DiskInfo, Error, LoadAvg, MemInfo};
 
 #[path = "kstat.rs"]

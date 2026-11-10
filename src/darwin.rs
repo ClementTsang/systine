@@ -105,7 +105,7 @@ pub fn boottime() -> Result<libc::timeval, Error> {
     let mut size: libc::size_t = size_of_val(&bt) as libc::size_t;
     let ret = unsafe {
         libc::sysctl(
-            mib.as_ptr(),
+            mib.as_ptr() as *mut _,
             2,
             &mut bt as *mut libc::timeval as *mut libc::c_void,
             &mut size,

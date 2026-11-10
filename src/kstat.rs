@@ -112,7 +112,7 @@ mod wrapper {
 
     /// Turn an optional CStr into a (const char *) for Some, or NULL for None.
     fn cp(p: &Option<&CStr>) -> *const c_char {
-        p.map_or_else(|| null, |p| p.as_ptr())
+        p.map_or_else(|| std::ptr::null::<c_char>(), |p| p.as_ptr())
     }
 
     impl KstatWrapper {
