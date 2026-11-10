@@ -1,9 +1,0 @@
-[package]
-
-name = "test"
-version = "0.0.1"
-authors = ["Clement Tsang <cjhtsang@uwaterloo.ca>"]
-
-[dependencies.systine]
-path = ".."
-version = "*"
