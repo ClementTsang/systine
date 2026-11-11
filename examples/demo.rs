@@ -6,11 +6,15 @@ fn main() {
         os_type().expect("failed to get OS type"),
         os_release().expect("failed to get OS release")
     );
+    println!("cpu: {} cores", cpu_num().expect("failed to get CPU count"));
+    #[cfg(not(all(target_vendor = "apple", target_arch = "aarch64")))]
     println!(
         "cpu: {} cores, {} MHz",
         cpu_num().expect("failed to get CPU count"),
         cpu_speed().expect("failed to get CPU speed")
     );
+    #[cfg(all(target_vendor = "apple", target_arch = "aarch64"))]
+    println!("cpu: {} cores", cpu_num().expect("failed to get CPU count"));
     println!(
         "proc total: {}",
         proc_total().expect("failed to get process count")
