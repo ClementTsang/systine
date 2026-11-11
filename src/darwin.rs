@@ -12,6 +12,7 @@ static OS_KERN_BOOTTIME: libc::c_int = 21;
 
 /// Get operation system type.
 pub fn os_type() -> Result<String, Error> {
+    // SAFETY: `get_os_type` returns a null-terminated UTF-8 C string.
     let typ =
         unsafe { ffi::CStr::from_ptr(c_helpers::get_os_type() as *const libc::c_char).to_bytes() };
     Ok(String::from_utf8_lossy(typ).into_owned())
@@ -19,6 +20,7 @@ pub fn os_type() -> Result<String, Error> {
 
 /// Get operation system release version.
 pub fn os_release() -> Result<String, Error> {
+    // SAFETY: `get_os_release` returns a null-terminated UTF-8 C string, or NULL on failure.
     unsafe {
         let rp = c_helpers::get_os_release() as *const libc::c_char;
         if rp.is_null() {
@@ -34,6 +36,8 @@ pub fn os_release() -> Result<String, Error> {
 ///
 /// Notice, it returns the logical cpu quantity.
 pub fn cpu_num() -> Result<u32, Error> {
+    // SAFETY: `get_cpu_num` is a C helper compiled via build.rs that returns the
+    // logical CPU count, validated to be >= 1.
     unsafe { Ok(c_helpers::get_cpu_num()) }
 }
 
@@ -41,13 +45,14 @@ pub fn cpu_num() -> Result<u32, Error> {
 ///
 /// Such as 2500, that is 2500 MHz.
 pub fn cpu_speed() -> Result<u64, Error> {
-    // SAFETY: Calling C wrapper.
+    // SAFETY: `get_cpu_speed` is a C helper compiled via build.rs that returns
+    // the CPU speed in MHz, or 0 on failure. On aarch64/ARM, it's not available
+    // so we return 0 as a fallback.
     #[cfg(not(any(target_arch = "aarch64", target_arch = "arm")))]
     unsafe {
         Ok(c_helpers::get_cpu_speed())
     }
 
-    // FIXME: Fix this
     #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
     Ok(0)
 }
@@ -55,6 +60,8 @@ pub fn cpu_speed() -> Result<u64, Error> {
 /// Get system load average value.
 pub fn loadavg() -> Result<crate::LoadAvg, Error> {
     let mut l: [f64; 3] = [0f64; 3];
+    // SAFETY: `l` has exactly 3 elements and `getloadavg` writes at most 3 f64s
+    // into it. Returns < 3 on failure, which is handled below.
     if unsafe { libc::getloadavg(l.as_mut_ptr(), l.len() as libc::c_int) } < 3 {
         Err(Error::Unknown)
     } else {
@@ -68,6 +75,8 @@ pub fn loadavg() -> Result<crate::LoadAvg, Error> {
 
 /// Get current processes quantity.
 pub fn proc_total() -> Result<u64, Error> {
+    // SAFETY: `get_proc_total` is a C helper compiled via build.rs that returns
+    // the current process count, or 0 on failure.
     Ok(unsafe { c_helpers::get_proc_total() })
 }
 
@@ -75,16 +84,24 @@ pub fn proc_total() -> Result<u64, Error> {
 ///
 /// The buffers and cached variables of the MemInfo returned are zero.
 pub fn mem_info() -> Result<MemInfo, Error> {
+    // SAFETY: `get_mem_info` is a C helper compiled via build.rs that returns
+    // a valid `MemInfo` struct.
     Ok(unsafe { c_helpers::get_mem_info() })
 }
 
 /// Get disk information.
 pub fn disk_info() -> Result<DiskInfo, Error> {
+    // SAFETY: `get_disk_info` is a C helper compiled via build.rs that returns
+    // a valid `DiskInfo` struct.
     Ok(unsafe { c_helpers::get_disk_info() })
 }
 
 /// Get hostname.
 pub fn hostname() -> Result<String, Error> {
+    // SAFETY: `sysconf(_SC_HOST_NAME_MAX)` provides a valid buffer size.
+    // `gethostname` writes at most `buf_size` bytes into the buffer.
+    // `strnlen` reads up to `buf_size` bytes, and the buffer is truncated
+    // to the actual string length before converting to a CString.
     unsafe {
         let buf_size = libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize;
         let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
@@ -111,6 +128,8 @@ pub fn boottime() -> Result<libc::timeval, Error> {
     let mib = [OS_CTL_KERN, OS_KERN_BOOTTIME];
     let mut size: libc::size_t = size_of_val(&bt) as libc::size_t;
     let ret = unsafe {
+        // SAFETY: `mib` is a valid 2-element array. `bt` is a valid `timeval`
+        // passed by reference. `sysctl` writes at most `size` bytes into `bt`.
         libc::sysctl(
             mib.as_ptr() as *mut _,
             2,

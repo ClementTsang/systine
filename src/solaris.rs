@@ -14,11 +14,16 @@ pub fn os_type() -> Result<String, Error> {
 
 /// Get operation system release version.
 pub fn os_release() -> Result<String, Error> {
+    // SAFETY: `libc::uname` writes a zeroed `utsname` struct on success.
+    // `name.release` is a fixed-size C string (typically 65 bytes) that
+    // is null-terminated by `uname`.
     let release: Option<String> = unsafe {
         let mut name: libc::utsname = std::mem::zeroed();
         if libc::uname(&mut name) < 0 {
             None
         } else {
+            // SAFETY: `name.release` is a valid C string (<= 65 bytes) written
+            // by `uname`. It is null-terminated and contains ASCII.
             let cstr = std::ffi::CStr::from_ptr(name.release.as_mut_ptr());
             Some(cstr.to_string_lossy().to_string())
         }
@@ -33,6 +38,8 @@ pub fn os_release() -> Result<String, Error> {
 ///
 /// Notice, it returns the logical cpu quantity.
 pub fn cpu_num() -> Result<u32, Error> {
+    // SAFETY: `libc::sysconf` returns the number of online processors.
+    // The return value is validated (>= 1, <= u32::MAX) below before use.
     let ret = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
     if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::IO(std::io::Error::last_os_error()))
@@ -51,6 +58,8 @@ pub fn cpu_speed() -> Result<u64, Error> {
 /// Get system load average value.
 pub fn loadavg() -> Result<LoadAvg, Error> {
     let mut l: [f64; 3] = [0f64; 3];
+    // SAFETY: `l` has exactly 3 elements and `getloadavg` writes at most 3 f64s
+    // into it. Returns < 3 on failure, which is handled below.
     if unsafe { libc::getloadavg(l.as_mut_ptr(), l.len() as libc::c_int) } < 3 {
         Err(Error::Unknown)
     } else {
@@ -68,6 +77,8 @@ pub fn proc_total() -> Result<u64, Error> {
 }
 
 fn pagesize() -> Result<u32, Error> {
+    // SAFETY: `libc::sysconf` returns the system page size, which is always
+    // a positive value <= u32::MAX on supported platforms.
     let ret = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
     if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::Unknown)
@@ -100,6 +111,10 @@ pub fn disk_info() -> Result<DiskInfo, Error> {
 
 /// Get hostname.
 pub fn hostname() -> Result<String, Error> {
+    // SAFETY: `sysconf(_SC_HOST_NAME_MAX)` provides a valid buffer size.
+    // `gethostname` writes at most `buf_size` bytes into the buffer.
+    // `strnlen` reads up to `buf_size` bytes, and the buffer is truncated
+    // to the actual string length before converting to a CString.
     let buf_size = unsafe { libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize };
     let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
     let ret = unsafe { libc::gethostname(buf.as_mut_ptr() as *mut libc::c_char, buf_size) };
@@ -107,6 +122,8 @@ pub fn hostname() -> Result<String, Error> {
         return Err(Error::IO(std::io::Error::last_os_error()));
     }
     let hostname_len = unsafe { libc::strnlen(buf.as_ptr() as *const libc::c_char, buf_size) };
+    // SAFETY: `hostname_len` is validated by `strnlen` to be <= `buf_size`,
+    // so setting the vec length is safe and will not cause out-of-bounds access.
     unsafe {
         buf.set_len(hostname_len);
     }

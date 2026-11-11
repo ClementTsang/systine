@@ -52,19 +52,16 @@ jobs:
           - {
               os: "ubuntu-24.04",
               target: "x86_64-unknown-linux-gnu",
-              cross: false,
             }
           - {
               os: "ubuntu-24.04-arm",
               target: "aarch64-unknown-linux-gnu",
-              cross: false,
             }
-          - { os: "macos-15", target: "x86_64-apple-darwin", cross: false }
-          - { os: "macos-15", target: "aarch64-apple-darwin", cross: false }
+          - { os: "macos-15", target: "x86_64-apple-darwin" }
+          - { os: "macos-15", target: "aarch64-apple-darwin" }
           - {
               os: "windows-2022",
               target: "x86_64-pc-windows-msvc",
-              cross: false,
             }
     steps:
       - name: Checkout repository
@@ -94,7 +91,6 @@ jobs:
         with:
           command: test
           args: --locked --target=${{ matrix.info.target }} -- --nocapture --quiet
-          use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
@@ -103,8 +99,7 @@ jobs:
         uses: ClementTsang/cargo-action@69f4ebfa7421fcc17957f967cba3f528935489b9
         with:
           command: clippy
-          args: --locked --target=${{ matrix.info.target }} -- -D warnings
-          use-cross: ${{ matrix.info.cross }}
+          args: --locked --all-targets --all-features --target=${{ matrix.info.target }} -- -D warnings
           cross-version: ${{ env.CROSS_VERSION }}
         env:
           RUST_BACKTRACE: full
@@ -166,7 +161,7 @@ jobs:
         uses: ClementTsang/cargo-action@69f4ebfa7421fcc17957f967cba3f528935489b9
         with:
           command: clippy
-          args: --locked --target=${{ matrix.info.target }} -- -D warnings
+          args: --locked --all-targets --all-features --target=${{ matrix.info.target }} -- -D warnings
           use-cross: ${{ matrix.info.cross }}
           cross-version: ${{ env.CROSS_VERSION }}
 

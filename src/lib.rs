@@ -318,8 +318,11 @@ fn parse_line_for_linux_os_release(l: String) -> Option<(String, String)> {
 mod test {
     #[cfg(not(windows))]
     use crate::boottime;
+    #[cfg(not(all(target_vendor = "apple", target_arch = "aarch64")))]
     use crate::cpu_speed;
-    use crate::{cpu_num, disk_info, hostname, loadavg, mem_info, os_release, os_type, proc_total};
+    #[cfg(not(any(target_os = "solaris", target_os = "illumos")))]
+    use crate::disk_info;
+    use crate::{cpu_num, hostname, loadavg, mem_info, os_release, os_type, proc_total};
 
     #[test]
     pub fn test_os_type() {
