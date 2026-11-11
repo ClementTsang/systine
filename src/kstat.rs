@@ -59,10 +59,14 @@ mod wrapper {
 
     impl Kstat {
         fn name(&self) -> &CStr {
+            // SAFETY: `ks_name` is a null-terminated C string within the `Kstat` struct,
+            // which is managed by libkstat(3LIB).
             unsafe { CStr::from_ptr(self.ks_name.as_ptr()) }
         }
 
         fn module(&self) -> &CStr {
+            // SAFETY: `ks_module` is a null-terminated C string within the `Kstat` struct,
+            // which is managed by libkstat(3LIB).
             unsafe { CStr::from_ptr(self.ks_module.as_ptr()) }
         }
     }
@@ -117,6 +121,8 @@ mod wrapper {
 
     impl KstatWrapper {
         pub fn open() -> super::Result<Self> {
+            // SAFETY: `kstat_open` returns a non-null pointer on success, or NULL on
+            // failure. NULL is handled below by returning an error.
             let kc = NonNull::new(unsafe { kstat_open() });
             if let Some(kc) = kc {
                 Ok(KstatWrapper {
@@ -132,6 +138,9 @@ mod wrapper {
 
         /// Call kstat_lookup(3KSTAT) and store the result, if there is a match.
         pub fn lookup(&mut self, module: Option<&CStr>, name: Option<&CStr>) {
+            // SAFETY: `kstat_lookup` is called with a valid `KstatCtl` pointer and
+            // valid C string pointers (or NULL). Returns NULL on failure, handled by
+            // `NonNull::new`.
             self.ks =
                 NonNull::new(unsafe { kstat_lookup(self.kc.as_ptr(), cp(&module), -1, cp(&name)) });
 
@@ -147,6 +156,8 @@ mod wrapper {
             } else {
                 self.ks = self
                     .ks
+                    // SAFETY: `ks_next` is a linked-list pointer within the `Kstat` struct,
+                    // maintained by libkstat(3LIB). Accessing it is safe.
                     .and_then(|ks| NonNull::new(unsafe { ks.as_ref() }.ks_next));
             }
 
@@ -163,6 +174,7 @@ mod wrapper {
         #[allow(clippy::expect_used)]
         pub fn module(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
+            // SAFETY: `ks` is a valid pointer to a `Kstat` struct managed by libkstat.
             unsafe { ks.as_ref() }.module()
         }
 
@@ -171,17 +183,21 @@ mod wrapper {
         #[allow(clippy::expect_used)]
         pub fn name(&self) -> &CStr {
             let ks = self.ks.as_ref().expect("step() must return true first");
+            // SAFETY: `ks` is a valid pointer to a `Kstat` struct managed by libkstat.
             unsafe { ks.as_ref() }.name()
         }
 
         /// Look up a named kstat value.  For internal use by typed accessors.
         fn data_value(&self, statistic: &CStr) -> Option<NonNull<KstatNamed>> {
             let (ks, ksp) = if let Some(ks) = &self.ks {
+                // SAFETY: `ks` is a valid pointer to a `Kstat` struct managed by libkstat.
                 (unsafe { ks.as_ref() }, ks.as_ptr())
             } else {
                 return None;
             };
 
+            // SAFETY: `kstat_read` reads fresh data into the `Kstat` struct from the
+            // kernel. Returns -1 on failure, which is handled below.
             if unsafe { kstat_read(self.kc.as_ptr(), ksp, null_mut()) } == -1 {
                 return None;
             }
@@ -191,6 +207,8 @@ mod wrapper {
                 return None;
             }
 
+            // SAFETY: `kstat_data_lookup` returns a pointer to the named data within
+            // the kstat, or NULL if not found. NULL is handled by `NonNull::new`.
             NonNull::new(unsafe { kstat_data_lookup(ksp, cp(&Some(statistic))) })
                 .map(|voidp| voidp.cast())
         }
@@ -198,24 +216,32 @@ mod wrapper {
         /// Look up a named kstat value and interpret it as a "long_t".
         pub fn data_long(&self, statistic: &CStr) -> Option<i64> {
             self.data_value(statistic)
+                // SAFETY: `kn` is a valid pointer to a `KstatNamed` struct returned by
+                // `kstat_data_lookup`. The `value.l` field is safely read.
                 .map(|kn| unsafe { kn.as_ref().value.l })
         }
 
         /// Look up a named kstat value and interpret it as a "ulong_t".
         pub fn data_ulong(&self, statistic: &CStr) -> Option<u64> {
             self.data_value(statistic)
+                // SAFETY: `kn` is a valid pointer to a `KstatNamed` struct returned by
+                // `kstat_data_lookup`. The `value.ul` field is safely read.
                 .map(|kn| unsafe { kn.as_ref().value.ul })
         }
 
         /// Look up a named kstat value and interpret it as a "uint32_t".
         pub fn data_u32(&self, statistic: &CStr) -> Option<u32> {
             self.data_value(statistic)
+                // SAFETY: `kn` is a valid pointer to a `KstatNamed` struct returned by
+                // `kstat_data_lookup`. The `value.ui32` field is safely read.
                 .map(|kn| unsafe { kn.as_ref().value.ui32 })
         }
     }
 
     impl Drop for KstatWrapper {
         fn drop(&mut self) {
+            // SAFETY: `kstat_close` frees resources associated with the `KstatCtl`.
+            // It is called exactly once when the wrapper is dropped.
             unsafe { kstat_close(self.kc.as_ptr()) };
         }
     }

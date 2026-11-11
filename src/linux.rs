@@ -28,6 +28,8 @@ pub fn os_release() -> Result<String, Error> {
 ///
 /// Notice, it returns the logical cpu quantity.
 pub fn cpu_num() -> Result<u32, Error> {
+    // SAFETY: `libc::sysconf` returns the number of online processors.
+    // The return value is validated (>= 1, <= u32::MAX) below before use.
     let ret = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
     if ret < 1 || ret as i64 > u32::MAX as i64 {
         Err(Error::IO(io::Error::last_os_error()))
@@ -131,11 +133,17 @@ pub fn mem_info() -> Result<MemInfo, Error> {
 
 /// Get disk information.
 pub fn disk_info() -> Result<DiskInfo, Error> {
+    // SAFETY: `get_disk_info` is a C helper compiled via build.rs that reads
+    // from `/proc/mounts`. It returns a valid `DiskInfo` on success.
     Ok(unsafe { c_helpers::get_disk_info() })
 }
 
 /// Get hostname.
 pub fn hostname() -> Result<String, Error> {
+    // SAFETY: `sysconf(_SC_HOST_NAME_MAX)` provides a valid buffer size.
+    // `gethostname` writes at most `buf_size` bytes into the buffer.
+    // `strnlen` reads up to `buf_size` bytes, and the buffer is truncated
+    // to the actual string length before converting to a CString.
     unsafe {
         let buf_size = libc::sysconf(libc::_SC_HOST_NAME_MAX) as usize;
         let mut buf = Vec::<u8>::with_capacity(buf_size + 1);
